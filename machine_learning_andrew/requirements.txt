@@ -3,3 +3,4 @@ pandas
 ggplot
 matplotlib
 scipy
+sklearn
