@@ -16,8 +16,8 @@ def graph(formula, X, theta, ex2):
     plt.legend((lo, ll), ('Not admitted', 'Admitted'), scatterpoints=1)
 
     plt.plot(X[:, 2], boundary_values)
-    plt.ylabel('exam1')
-    plt.xlabel('exam2')
+    plt.ylabel('exam2')
+    plt.xlabel('exam1')
     plt.show()
 
 
