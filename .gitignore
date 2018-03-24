@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 /r_programming/programming_assignment_1/specdata
+*/.idea*
+*/venv/*
