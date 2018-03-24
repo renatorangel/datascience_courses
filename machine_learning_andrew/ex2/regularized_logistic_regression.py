@@ -4,8 +4,21 @@ import matplotlib.pyplot as plt
 import scipy.optimize as op
 
 
+# got this code from here: https://github.com/rragundez/coursera-machine-learning-AndrewNg-Python
+def create_polynomial_features(x, pol_deg):
+    x1 = x[:, 0]
+    x2 = x[:, 1]
+    x1.shape = (x1.size, 1)
+    x2.shape = (x2.size, 1)
+    X = np.ones((x1.size, 1))
+    for n in range(1, pol_deg + 1):
+        for m in range(n + 1):
+            X = np.append(X, x1 ** (n - m) * x2 ** m, axis=1)
+    return X
+
+
 def get_boundary_values(x, theta):
-    return (- theta[0] - theta[2] * x) / theta[1]
+    return (0.5 - theta[0] - theta[2] * x) / theta[1]
 
 
 def plot_graph(formula, X, theta, ex2):
@@ -24,7 +37,9 @@ def plot_graph(formula, X, theta, ex2):
 
 def sigmoid(z):
 
-    return 1 / (1 + np.exp(np.negative(z)))
+    a = 1 / (1 + np.exp(np.negative(z)))
+
+    return a
 
 
 def hypothesis(theta, X):
@@ -48,14 +63,15 @@ def gradient_descent(X, Y, m, theta, alpha, iterations):
 
     for i in range(0, iterations):
         cost = cost_function_j_(theta, X, Y, m)
-        # print(cost)
+        print(cost)
         cost_list.append(cost)
 
         b = hypothesis(theta, X) - Y.reshape(1, m)
 
         theta[0] = theta.item(0) - (alpha / m) * np.sum(b)
-        theta[1] = theta.item(1) - (alpha / m) * X[:, 1].dot(b.transpose())[0]
-        theta[2] = theta.item(2) - (alpha / m) * X[:, 2].dot(b.transpose())[0]
+        for index_theta in range(1, theta.shape[0]):
+
+            theta[index_theta] = theta[index_theta] - (alpha / m) * X[:, index_theta].dot(b.transpose())[0]
 
     plt.plot(range(0, iterations), cost_list)
     plt.ylabel('cost')
@@ -65,27 +81,26 @@ def gradient_descent(X, Y, m, theta, alpha, iterations):
 
 
 def main():
-    ex2 = pd.read_csv("ex2data1.txt", header=None)
+    ex2 = pd.read_csv("ex2data2.txt", header=None)
 
+    X = create_polynomial_features(np.column_stack((ex2[0], ex2[1])), 6)
     m = len(ex2.index)
-    X = np.column_stack((np.ones(m), ex2[0], ex2[1]))
+
     Y = ex2[2].as_matrix().reshape((m, 1))
     alpha = 0.001
-    iterations = 1000000
-    theta = np.array([0.1, 0.1, 0.1])
+    iterations = 100000
 
+    theta = np.repeat(0.1, X.shape[1])
+    print(theta.shape)
     result = op.fmin_bfgs(cost_function_j_, theta, args=(X, Y, m))
 
     print(result)
-    example_admission_score = np.array([1, 45, 85])
-    print("Got an admission probability of {} "
-          "from an exam1 45 and exam 2 85".format(sigmoid(result.transpose().dot(example_admission_score))))
+
     plot_graph(get_boundary_values, X, result, ex2)
 
     new_theta = gradient_descent(X, Y, m, theta, alpha, iterations)
     print(new_theta)
-    print("Got an admission probability of {} "
-          "from an exam1 45 and exam 2 85".format(sigmoid(new_theta.transpose().dot(example_admission_score))))
+
     plot_graph(get_boundary_values, X, new_theta, ex2)
 
 
