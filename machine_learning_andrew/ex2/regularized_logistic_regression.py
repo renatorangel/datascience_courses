@@ -17,29 +17,30 @@ def create_polynomial_features(x, pol_deg):
     return X
 
 
-def get_boundary_values(x, theta):
-    return (0.5 - theta[0] - theta[2] * x) / theta[1]
+def plot_graph(theta, ex2):
 
+    x1 = np.linspace(-1.2, 1.2, 120)
+    x2 = np.linspace(-1.2, 1.2, 120)
 
-def plot_graph(formula, X, theta, ex2):
-    boundary_values = formula(X[:, 2], theta)
+    Jv = np.empty((120, 120))
+    for i, v1 in enumerate(x1):
+        for j, v2 in enumerate(x2):
+            v = np.matrix([v1, v2])
+            Jv[i, j] = predict(v, theta)
 
     colors = ['r', 'b']
     lo = plt.scatter(ex2.loc[ex2.iloc[:, 2] == 0, 0], ex2.loc[ex2.iloc[:, 2] == 0, 1], marker='x', color=colors[0])
     ll = plt.scatter(ex2.loc[ex2.iloc[:, 2] == 1, 0], ex2.loc[ex2.iloc[:, 2] == 1, 1], marker='o', color=colors[1])
-    plt.legend((lo, ll), ('Not admitted', 'Admitted'), scatterpoints=1)
-
-    plt.plot(X[:, 2], boundary_values)
-    plt.ylabel('exam2')
-    plt.xlabel('exam1')
+    plt.legend((lo, ll), ('Bad quality', 'Good quality'), scatterpoints=1)
+    plt.contour(x1, x2, Jv, [0.5])
+    plt.ylabel('Test 2')
+    plt.xlabel('Test 1')
     plt.show()
 
 
 def sigmoid(z):
 
-    a = 1 / (1 + np.exp(np.negative(z)))
-
-    return a
+    return 1 / (1 + np.exp(np.negative(z)))
 
 
 def hypothesis(theta, X):
@@ -56,6 +57,12 @@ def cost_function_j_(theta, X, Y, m):
     one_minus_y_transpose = np.multiply(1 - Y.transpose(), np.log(1 - h_theta))
 
     return np.sum(y_transpose_m_log_h_theta - one_minus_y_transpose) / m
+
+
+def predict(x, theta):
+    X = create_polynomial_features(x, 6)
+
+    return hypothesis(theta, X)
 
 
 def gradient_descent(X, Y, m, theta, alpha, iterations):
@@ -87,21 +94,18 @@ def main():
     m = len(ex2.index)
 
     Y = ex2[2].as_matrix().reshape((m, 1))
-    alpha = 0.001
-    iterations = 100000
+    alpha = 0.009
+    iterations = 1000000
 
     theta = np.repeat(0.1, X.shape[1])
-    print(theta.shape)
+
     result = op.fmin_bfgs(cost_function_j_, theta, args=(X, Y, m))
-
     print(result)
-
-    plot_graph(get_boundary_values, X, result, ex2)
+    plot_graph(result, ex2)
 
     new_theta = gradient_descent(X, Y, m, theta, alpha, iterations)
     print(new_theta)
-
-    plot_graph(get_boundary_values, X, new_theta, ex2)
+    plot_graph(new_theta, ex2)
 
 
 if __name__ == "__main__":
