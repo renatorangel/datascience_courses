@@ -22,17 +22,25 @@ def plot_graph(theta, ex2):
     x1 = np.linspace(-1.2, 1.2, 120)
     x2 = np.linspace(-1.2, 1.2, 120)
 
-    Jv = np.empty((120, 120))
+    predicted_mat = np.empty((120, 120))
     for i, v1 in enumerate(x1):
         for j, v2 in enumerate(x2):
             v = np.matrix([v1, v2])
-            Jv[i, j] = predict(v, theta)
+            predicted_mat[i, j] = predict(v, theta)
 
     colors = ['r', 'b']
-    lo = plt.scatter(ex2.loc[ex2.iloc[:, 2] == 0, 0], ex2.loc[ex2.iloc[:, 2] == 0, 1], marker='x', color=colors[0])
-    ll = plt.scatter(ex2.loc[ex2.iloc[:, 2] == 1, 0], ex2.loc[ex2.iloc[:, 2] == 1, 1], marker='o', color=colors[1])
+    lo = plt.scatter(ex2.loc[ex2.iloc[:, 2] == 0, 0],
+                     ex2.loc[ex2.iloc[:, 2] == 0, 1],
+                     marker='x',
+                     color=colors[0])
+
+    ll = plt.scatter(ex2.loc[ex2.iloc[:, 2] == 1, 0],
+                     ex2.loc[ex2.iloc[:, 2] == 1, 1],
+                     marker='o',
+                     color=colors[1])
+    
     plt.legend((lo, ll), ('Bad quality', 'Good quality'), scatterpoints=1)
-    plt.contour(x1, x2, Jv, [0.5])
+    plt.contour(x1, x2, predicted_mat, [0.5])
     plt.ylabel('Test 2')
     plt.xlabel('Test 1')
     plt.show()
@@ -49,14 +57,16 @@ def hypothesis(theta, X):
     return sigmoid(x_dot_theta_transpose)
 
 
-def cost_function_j_(theta, X, Y, m):
+def cost_function_j_(theta, X, Y, m, regularization_lambda):
     h_theta = hypothesis(theta, X)
 
     y_transpose_m_log_h_theta = np.multiply(-Y.transpose(), np.log(h_theta))
 
     one_minus_y_transpose = np.multiply(1 - Y.transpose(), np.log(1 - h_theta))
 
-    return np.sum(y_transpose_m_log_h_theta - one_minus_y_transpose) / m
+    regularization = regularization_lambda / (2 * m) * np.sum(theta[1:] ** 2)
+
+    return np.sum(y_transpose_m_log_h_theta - one_minus_y_transpose) / m + regularization
 
 
 def predict(x, theta):
@@ -65,20 +75,20 @@ def predict(x, theta):
     return hypothesis(theta, X)
 
 
-def gradient_descent(X, Y, m, theta, alpha, iterations):
+def gradient_descent(X, Y, m, theta, alpha, iterations, reg_lambda):
     cost_list = []
 
     for i in range(0, iterations):
-        cost = cost_function_j_(theta, X, Y, m)
+        cost = cost_function_j_(theta, X, Y, m, reg_lambda)
         print(cost)
         cost_list.append(cost)
 
         b = hypothesis(theta, X) - Y.reshape(1, m)
 
         theta[0] = theta.item(0) - (alpha / m) * np.sum(b)
-        for index_theta in range(1, theta.shape[0]):
-
-            theta[index_theta] = theta[index_theta] - (alpha / m) * X[:, index_theta].dot(b.transpose())[0]
+        for i_theta in range(1, theta.shape[0]):
+            regularization = (reg_lambda / m) * theta[i_theta]
+            theta[i_theta] = theta[i_theta] - ((alpha / m) * X[:, i_theta].dot(b.transpose())[0] + regularization)
 
     plt.plot(range(0, iterations), cost_list)
     plt.ylabel('cost')
@@ -94,16 +104,17 @@ def main():
     m = len(ex2.index)
 
     Y = ex2[2].as_matrix().reshape((m, 1))
-    alpha = 0.009
-    iterations = 1000000
+    alpha = 0.1
+    iterations = 10000
+    regularization_lambda = 1.0
 
     theta = np.repeat(0.1, X.shape[1])
 
-    result = op.fmin_bfgs(cost_function_j_, theta, args=(X, Y, m))
+    result = op.fmin_bfgs(cost_function_j_, theta, args=(X, Y, m, regularization_lambda))
     print(result)
     plot_graph(result, ex2)
 
-    new_theta = gradient_descent(X, Y, m, theta, alpha, iterations)
+    new_theta = gradient_descent(X, Y, m, theta, alpha, iterations, regularization_lambda)
     print(new_theta)
     plot_graph(new_theta, ex2)
 
