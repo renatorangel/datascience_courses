@@ -14,6 +14,7 @@ def create_polynomial_features(x, pol_deg):
     for n in range(1, pol_deg + 1):
         for m in range(n + 1):
             X = np.append(X, x1 ** (n - m) * x2 ** m, axis=1)
+
     return X
 
 
@@ -38,7 +39,7 @@ def plot_graph(theta, ex2):
                      ex2.loc[ex2.iloc[:, 2] == 1, 1],
                      marker='o',
                      color=colors[1])
-    
+
     plt.legend((lo, ll), ('Bad quality', 'Good quality'), scatterpoints=1)
     plt.contour(x1, x2, predicted_mat, [0.5])
     plt.ylabel('Test 2')
@@ -71,7 +72,6 @@ def cost_function_j_(theta, X, Y, m, regularization_lambda):
 
 def predict(x, theta):
     X = create_polynomial_features(x, 6)
-
     return hypothesis(theta, X)
 
 
@@ -80,7 +80,6 @@ def gradient_descent(X, Y, m, theta, alpha, iterations, reg_lambda):
 
     for i in range(0, iterations):
         cost = cost_function_j_(theta, X, Y, m, reg_lambda)
-        print(cost)
         cost_list.append(cost)
 
         b = hypothesis(theta, X) - Y.reshape(1, m)
@@ -104,11 +103,11 @@ def main():
     m = len(ex2.index)
 
     Y = ex2[2].as_matrix().reshape((m, 1))
-    alpha = 0.1
+    alpha = 0.2
     iterations = 10000
     regularization_lambda = 1.0
 
-    theta = np.repeat(0.1, X.shape[1])
+    theta = np.repeat(0.0, X.shape[1])
 
     result = op.fmin_bfgs(cost_function_j_, theta, args=(X, Y, m, regularization_lambda))
     print(result)

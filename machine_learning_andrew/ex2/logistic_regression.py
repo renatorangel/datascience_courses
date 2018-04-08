@@ -4,21 +4,32 @@ import matplotlib.pyplot as plt
 import scipy.optimize as op
 
 
-def get_boundary_values(x, theta):
-    return (- theta[0] - theta[2] * x) / theta[1]
+def plot_graph(theta, ex2, mu, sigma):
 
+    x1 = np.linspace(25.0, 100.0, 120)
+    x2 = np.linspace(25.0, 100.0, 120)
 
-def plot_graph(formula, X, theta, ex2):
-    boundary_values = formula(X[:, 2], theta)
+    predicted_mat = np.empty((120, 120))
+    for i, v1 in enumerate(x1):
+        for j, v2 in enumerate(x2):
+            v = np.array([v1, v2])
+            predicted_mat[i, j] = predict(v, mu, sigma, theta)
 
     colors = ['r', 'b']
-    lo = plt.scatter(ex2.loc[ex2.iloc[:, 2] == 0, 0], ex2.loc[ex2.iloc[:, 2] == 0, 1], marker='x', color=colors[0])
-    ll = plt.scatter(ex2.loc[ex2.iloc[:, 2] == 1, 0], ex2.loc[ex2.iloc[:, 2] == 1, 1], marker='o', color=colors[1])
-    plt.legend((lo, ll), ('Not admitted', 'Admitted'), scatterpoints=1)
+    lo = plt.scatter(ex2.loc[ex2.iloc[:, 2] == 0, 0],
+                     ex2.loc[ex2.iloc[:, 2] == 0, 1],
+                     marker='x',
+                     color=colors[0])
 
-    plt.plot(X[:, 2], boundary_values)
-    plt.ylabel('exam2')
-    plt.xlabel('exam1')
+    ll = plt.scatter(ex2.loc[ex2.iloc[:, 2] == 1, 0],
+                     ex2.loc[ex2.iloc[:, 2] == 1, 1],
+                     marker='o',
+                     color=colors[1])
+
+    plt.legend((lo, ll), ('Bad quality', 'Good quality'), scatterpoints=1)
+    plt.contour(x1, x2, predicted_mat, [0.5])
+    plt.ylabel('Test 2')
+    plt.xlabel('Test 1')
     plt.show()
 
 
@@ -64,29 +75,54 @@ def gradient_descent(X, Y, m, theta, alpha, iterations):
     return theta
 
 
+def normalize_data(x):
+    mu = np.mean(x, axis=0)
+    sigma = np.std(x, axis=0)
+    x = (x-mu)/sigma
+    x = np.append(np.ones((x.shape[0], 1)), x, axis=1)
+    return x, mu, sigma
+
+
+def predict(array_grades, mu, sigma, model):
+    x = (array_grades - mu) / sigma
+    x = np.append(1, x)
+    a = sigmoid(model.transpose().dot(x))
+    return a
+
+
 def main():
     ex2 = pd.read_csv("ex2data1.txt", header=None)
 
     m = len(ex2.index)
-    X = np.column_stack((np.ones(m), ex2[0], ex2[1]))
+
+    X, mu, sigma = normalize_data(np.column_stack((ex2[0], ex2[1])))
+
     Y = ex2[2].as_matrix().reshape((m, 1))
-    alpha = 0.001
-    iterations = 1000000
-    theta = np.array([0.1, 0.1, 0.1])
+    alpha = 0.003
+    iterations = 300000
+    theta = np.array([1.0, 1.0, 1.0])
+    result_message = "Admission probability of {:.3%} from {}"
 
     result = op.fmin_bfgs(cost_function_j_, theta, args=(X, Y, m))
 
     print(result)
-    example_admission_score = np.array([1, 45, 85])
-    print("Got an admission probability of {} "
-          "from an exam1 45 and exam 2 85".format(sigmoid(result.transpose().dot(example_admission_score))))
-    plot_graph(get_boundary_values, X, result, ex2)
+    print(result_message.format(predict(np.array([45, 85],),
+                                        mu,
+                                        sigma,
+                                        result),
+                                "fmin_bfgs"))
+
+    plot_graph(result, ex2, mu, sigma)
 
     new_theta = gradient_descent(X, Y, m, theta, alpha, iterations)
     print(new_theta)
-    print("Got an admission probability of {} "
-          "from an exam1 45 and exam 2 85".format(sigmoid(new_theta.transpose().dot(example_admission_score))))
-    plot_graph(get_boundary_values, X, new_theta, ex2)
+    print(result_message.format(predict(np.array([45, 85],),
+                                        mu,
+                                        sigma,
+                                        new_theta),
+                                "gradient_descent"))
+
+    plot_graph(new_theta, ex2, mu, sigma)
 
 
 if __name__ == "__main__":
