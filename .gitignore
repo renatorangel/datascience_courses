@@ -3,4 +3,5 @@
 .RData
 /r_programming/programming_assignment_1/specdata
 */.idea*
-*/venv/*
+*/venv
+ml_engineer_udacity/*/venv/
