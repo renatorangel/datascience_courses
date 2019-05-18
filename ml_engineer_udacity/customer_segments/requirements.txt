@@ -3,4 +3,4 @@ numpy
 scikit-learn
 jupyter
 matplotlib
-pandas
+pandas==0.23.2
