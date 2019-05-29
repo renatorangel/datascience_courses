@@ -4,3 +4,4 @@ scikit-learn
 jupyter
 matplotlib
 pandas==0.23.2
+seaborn
